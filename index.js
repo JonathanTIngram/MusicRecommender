@@ -39,11 +39,11 @@ const scopes = [
 
 
 const spotifyApi = new SpotifyWebApi({
-  accessToken: 'BQCkGWqVXAyblw5XM12KmN82DXESPTJBEIwz0RCsZKFD4PF0UiWh_Ym0rTFgHW3xOSR5SNJuiK0dsW6mc7MmFJVDtenFQGIu_t0fecReduk1fLDCQIJ--OpUTohTRyS2aY5RiXUJ9tI9dyEvXnf5KGhJYGXNujqvTLD4KLm65Br06B32kPkDtcrgGeGhsw7_2AbSMMzo5umNRpo33boQhERwlXpG3iS8Y0maAPRX8BPL1aZ9JkQQH2L7aPt87C1nM4TVyE8qSiNNj5HWhwnqNmriid3afp24cdNcywieFvxX2N_v',
-  refreshToken: 'AQAVH3o_nMlu3-oQHnyH3YCReTlDdKQqxjJoEJcIiJpMOy3yJAMYeQ1gG9sQeTWOeRdzK1ixmB-tHe3-O57pi1yfFEF8LhWRQWpvFmG7CDmOiToP4jmb8rPJJsMPFhll82g',
-  redirectUri: 'http://localhost:4000/callback',
-  clientId: '2daa6462e7b14aa2b780f7bb309b6fc1',
-  clientSecret: '14114e556a044c318da5b16f4410d287'
+  accessToken: '',
+  refreshToken: '',
+  redirectUri: '',
+  clientId: '',
+  clientSecret: ''
 });
 
 
