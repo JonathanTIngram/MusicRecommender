@@ -44,12 +44,12 @@ var Home = () => {
             </div>
             <div>
                 <p>This project was created by <JonLink href="https://github.com/JonathanTIngram"> Jonathan Ingram </JonLink>
-                   by utilizing the <LastFMLink href="https://www.last.fm/api"> Last FM API </LastFMLink></p>
+                   by utilizing the <LastFMLink href="https://developer.spotify.com/documentation/"> Spotify API </LastFMLink></p>
             </div>
 
             <div>
                 <p>
-                The idea for this project came from finding new music by looking through YouTube recommendations
+                The idea for this project came from finding new music by looking through Spotify/Apple Music recommendations
                     for music already know. The thought process is, that this website would streamline that process.
                 </p>
             </div>

@@ -1,5 +1,18 @@
-const SpotifyWebApi = require('spotify-web-api-node');
-const express = require('express');
+const express = require('express')
+const app = require('express')()
+const http = require('http').createServer(app)
+const io = require('socket.io')(http, {
+    cors: true
+})
+
+
+require('dotenv').config();
+const fs = require('fs');
+
+var cors = require('cors');
+app.use(express.json());
+
+
 
 const scopes = [
   'ugc-image-upload',
@@ -23,17 +36,7 @@ const scopes = [
   'user-follow-modify'
 ];
 
-var theAccessToken;
-
-const spotifyApi = new SpotifyWebApi({
-  redirectUri: 'http://localhost:4000/callback',
-  clientId: '2daa6462e7b14aa2b780f7bb309b6fc1',
-  clientSecret: '14114e556a044c318da5b16f4410d287'
-});
-
-const app = express();
-
-app.get('/', (req, res) => {
+app.get('/login', (req, res) => {
   res.redirect(spotifyApi.createAuthorizeURL(scopes));
 });
 
@@ -79,9 +82,24 @@ app.get('/callback', (req, res) => {
       console.error('Error getting Tokens:', error);
       res.send(`Error getting Tokens: ${error}`);
     });
-
 });
 
+//setup Last FM API
+var LastFmNode = require('lastfm').LastFmNode;
+var SpotifyWebApi = require('spotify-web-api-node');
+
+var lastfm = new LastFmNode({
+    api_key: process.env.lastfmAPIKEY,
+    secret: process.env.lastfmSECRET
+});
+
+var spotifyApi = new SpotifyWebApi({
+  clientId: process.env.spotifyClient,
+  clientSecret: process.env.spotifySecret
+});
+
+
+// Search artists whose name contains 'Love'
 
 //getGenres
 //getSimilarArtists
@@ -110,7 +128,6 @@ var getArtistGenre = (artist) => {
     console.error(err);
   });
 
-
 }
 
 
@@ -119,7 +136,9 @@ var id;
 var getArtistID = (artist) => {
   spotifyApi.searchArtists(artist)
   .then(function(data) {
-    console.log(data.body.artists.items[0].id); 
+    id = data.body.artists.items[0].id; 
+
+
   }, function(err) {
     console.error(err);
   });
@@ -127,14 +146,20 @@ var getArtistID = (artist) => {
 
 }
 
-
-spotifyApi.setAccessToken('BQCcPsXwfL6G9Dfb16HyF1tiC339g1Lcq30aVGfLpJ9HlW2Nc7F8gbUG5MMHX40jP1_KijFPXFO0dwbJeMyy-pDkC1f3VrWSZ7ZW0GDNeGS7b9I_DBMEyw-CxT9bTy48XMx3PFHh8MhaQf4Vxc1uJg7AAmSdBj9OWPsW5bm7OMkjeboyIgOYlciJwJYad5fbD1-Ho8vAgCxCdWHFNsaRxCsonCsNWZU_o6PpIR0ljWKfcrGo4HtPPsN2VifsOh5Z-b9nLc_NDCcu8TTNm7gW6YSg_Kw3tpPaaH5ao1U4EpjRi7mz')
-
-getOriginalArtistImage('Joji')
+getArtistID('Joji');
+console.log(id)
 
 
-app.listen(4000, () =>
-  console.log(
-    'HTTP Server up. Now go to http://localhost:4000/login in your browser.'
-  )
-);
+// spotifyApi.getArtistRelatedArtists(getArtistID('Knocked Loose'))
+//   .then(function(data) {
+//     console.log(data.body);
+//   }, function(err) {
+//     done(err);
+//   });
+
+
+
+
+http.listen(4000, function() {
+  console.log('listening on port 4000')
+})

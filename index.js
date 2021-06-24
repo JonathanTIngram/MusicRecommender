@@ -1,128 +1,295 @@
-const express = require('express')
-const app = require('express')()
-const http = require('http').createServer(app)
-const io = require('socket.io')(http, {
-    cors: true
-})
+const SpotifyWebApi = require('spotify-web-api-node');
+const express = require('express');
 
-const fs = require('fs');
-
+const app = express();
+const fetch = require('node-fetch');
+const server = require('http').createServer(app);
 var cors = require('cors');
+
+
+const io = require('socket.io')(server, {
+  cors: true
+})
 app.use(express.json());
-
-
-var Scraper = require('images-scraper');
-
-
-//for getting artist images
-const google = new Scraper({
-  puppeteer: {
-    headless: false,
-  },
-});
-
-//setup Last FM API
-var LastFmNode = require('lastfm').LastFmNode;
-
-var lastfm = new LastFmNode({
-    api_key: '991ce3b092f1580bbf0a14b1ad78cf9a',
-    secret: '59ecabc104ad978e525d422bd723a1fd'
-});
-  
-
-
-var similarBands; //variable to get similar artist
-var similarArtistList = [];
-const getSimilarArtists = (originalArtist) => {
-
-    console.log(`OG Artist is: ${originalArtist}`)
-
-    var request = lastfm.request("artist.getInfo", {
-        artist: originalArtist,
-        handlers: {
-            success: function(data) {
-
-                console.log(`inside request ${originalArtist}`)
-
-                var similarArtists = data.artist.similar.artist;
-
-                for (bands in similarArtists){
-                // console.log(similarArtists[bands].name);
-                similarArtistList.push(`${similarArtists[bands].name}`);
-                
-                }
-
-                similarBands = similarArtistList;
-                return similarBands;
-
-            },
-            error: function(error) {
-                console.log("Error: " + error.message);
-            }
-        }
-});
-
-
-}
 
 //Cors allows the frontend and backend to communicate
 app.use(cors());
 
-
-var result0;
-var result1;
-var result2;
-var result3;
-var result4;
-
-var test = []
-//Create socket connection
-io.on('connection', socket => {
-    console.log('connected')
-
-
-    //recieve original artist from the client
-
-
-  socket.on('originalArtist', (arg) => {
-    console.log(`Original Artist Socket IO is ${arg}`)
-    getSimilarArtists(arg);
-    (async () => {
-      result0 = await google.scrape(`${similarBands[0]} music artist`, 1);
-      result1 = await google.scrape(`${similarBands[1]} music artist`, 1);
-      result2 = await google.scrape(`${similarBands[2]} music artist`, 1);
-      result3 = await google.scrape(`${similarBands[3]} music artist`, 1);
-      result4 = await google.scrape(`${similarBands[4]} music artist`, 1);
+const scopes = [
+  'ugc-image-upload',
+  'user-read-playback-state',
+  'user-modify-playback-state',
+  'user-read-currently-playing',
+  'streaming',
+  'app-remote-control',
+  'user-read-email',
+  'user-read-private',
+  'playlist-read-collaborative',
+  'playlist-modify-public',
+  'playlist-read-private',
+  'playlist-modify-private',
+  'user-library-modify',
+  'user-library-read',
+  'user-top-read',
+  'user-read-playback-position',
+  'user-read-recently-played',
+  'user-follow-read',
+  'user-follow-modify'
+];
 
 
+const spotifyApi = new SpotifyWebApi({
+  accessToken: 'BQCkGWqVXAyblw5XM12KmN82DXESPTJBEIwz0RCsZKFD4PF0UiWh_Ym0rTFgHW3xOSR5SNJuiK0dsW6mc7MmFJVDtenFQGIu_t0fecReduk1fLDCQIJ--OpUTohTRyS2aY5RiXUJ9tI9dyEvXnf5KGhJYGXNujqvTLD4KLm65Br06B32kPkDtcrgGeGhsw7_2AbSMMzo5umNRpo33boQhERwlXpG3iS8Y0maAPRX8BPL1aZ9JkQQH2L7aPt87C1nM4TVyE8qSiNNj5HWhwnqNmriid3afp24cdNcywieFvxX2N_v',
+  refreshToken: 'AQAVH3o_nMlu3-oQHnyH3YCReTlDdKQqxjJoEJcIiJpMOy3yJAMYeQ1gG9sQeTWOeRdzK1ixmB-tHe3-O57pi1yfFEF8LhWRQWpvFmG7CDmOiToP4jmb8rPJJsMPFhll82g',
+  redirectUri: 'http://localhost:4000/callback',
+  clientId: '2daa6462e7b14aa2b780f7bb309b6fc1',
+  clientSecret: '14114e556a044c318da5b16f4410d287'
+});
 
-      result0 = result0[0].url;
-      result1 = result1[0].url;
-      result2 = result2[0].url;
-      result3 = result3[0].url;
-      result4 = result4[0].url;
 
 
-      console.log(`Image 0 URL: ${result0}`);
-      console.log('result1', result1);
-      console.log('result2', result2);
-      console.log('result3', result3);
-      console.log('result4', result4);
+app.get('/', (req, res) => {
+  res.redirect(spotifyApi.createAuthorizeURL(scopes));
+});
 
-      sendImages = [result0, result1, result2, result3, result4]
+app.get('/callback', (req, res) => {
+  const error = req.query.error;
+  const code = req.query.code;
+  const state = req.query.state;
 
-      socket.emit('artistImages', sendImages)
+  if (error) {
+    console.error('Callback Error:', error);
+    res.send(`Callback Error: ${error}`);
+    return;
+  }
 
-    })();
+  spotifyApi
+    .authorizationCodeGrant(code)
+    .then(data => {
+      const access_token = data.body['access_token'];
+      const refresh_token = data.body['refresh_token'];
+      const expires_in = data.body['expires_in'];
 
-    console.log(`inside socket ${similarBands}}`)
-  });
+      spotifyApi.setAccessToken(access_token);
+      spotifyApi.setRefreshToken(refresh_token);
 
-  socket.emit('sendSimilar', similarBands);
+      console.log('access_token:', access_token);
+      console.log('refresh_token:', refresh_token);
 
+      console.log(
+        `Sucessfully retreived access token. Expires in ${expires_in} s.`
+      );
+      res.send('Success! You can now close the window.');
+
+      setInterval(async () => {
+        const data = await spotifyApi.refreshAccessToken();
+        const access_token = data.body['access_token'];
+
+        console.log('The access token has been refreshed!');
+        console.log('access_token:', access_token);
+        spotifyApi.setAccessToken(access_token);
+      }, expires_in / 2 * 1000);
+    })
+    .catch(error => {
+      console.error('Error getting Tokens:', error);
+      res.send(`Error getting Tokens: ${error}`);
+    });
 
 });
 
-http.listen(4000, function() {
-  console.log('listening on port 4000')
+
+
+//getGenres
+//getSimilarArtists
+//getImages
+
+
+var getOriginalArtistImage = (artist) => {
+
+  spotifyApi.searchArtists(artist)
+  .then(function(data) {
+    var artistImage = data.body.artists.items[0].images[1].url;
+    console.log(`Picture of ${artist}`, artistImage);
+  }, function(err) {
+    console.error(err);
+  });
+
+} 
+
+
+var getSimilarArtistsImages = (artists) => {
+
+
+  var imageURLs = []
+  spotifyApi.searchArtists(artists[0])
+  .then(function(data) {
+    var artistImage = data.body.artists.items[0].images[1].url;
+    imageURLs.push(artistImage);
+  }, function(err) {
+    console.error(err);
+  });
+
+  spotifyApi.searchArtists(artists[1])
+  .then(function(data) {
+    var artistImage = data.body.artists.items[0].images[1].url;
+    imageURLs.push(artistImage);
+  }, function(err) {
+    console.error(err);
+  });
+
+  spotifyApi.searchArtists(artists[2])
+  .then(function(data) {
+    var artistImage = data.body.artists.items[0].images[1].url;
+    imageURLs.push(artistImage);
+  }, function(err) {
+    console.error(err);
+  });
+
+  spotifyApi.searchArtists(artists[3])
+  .then(function(data) {
+    var artistImage = data.body.artists.items[0].images[1].url;
+    imageURLs.push(artistImage);
+  }, function(err) {
+    console.error(err);
+  });
+
+  spotifyApi.searchArtists(artists[4])
+  .then(function(data) {
+    var artistImage = data.body.artists.items[0].images[1].url;
+    imageURLs.push(artistImage);
+  }, function(err) {
+    console.error(err);
+  });
+
+
+  console.log(imageURLs)
+  io.on('connection', (socket) => {
+    console.log(`Socket Baby`)
+    socket.emit('similarImages', imageURLs);
+  })
+
+} 
+
+var getArtistGenre = (artist) => {
+
+  spotifyApi.searchArtists(artist)
+  .then(function(data) {
+    var genres = data.body.artists.items[0].genres;
+    console.log(`Genres of ${artist}`, genres);
+  }, function(err) {
+    console.error(err);
+  });
+
+
+}
+
+
+var getSimilarArtists = (artist) => {
+  var id;
+  //first get the artist ID
+  spotifyApi.searchArtists(artist)
+  .then(function(data) {
+    id = data.body.artists.items[0].id;
+    console.log(id)
+    
+    //Now pass the artist id to search artists that are similar to that artist
+    spotifyApi.getArtistRelatedArtists(id).then((data) => {
+
+      io.on('connection', (socket) => {
+        console.log(`Socket Baby`)
+        socket.emit('similarArtists', data.body);
+      })
+    })
+  }, function(err) {
+    console.error(err);
+  });
+}
+
+
+//Searches for playlist but returns the first song of a playlist
+var getVibe = () => {
+  spotifyApi.searchPlaylists('workout')
+  .then(function(data) {
+    var playListID = data.body.playlists.items[0];
+    
+    console.log(playListID)
+  });
+}
+
+
+
+io.on('connection', (socket) => {
+
+  socket.on('originalArtist', (originalArtist) => {
+    console.log(`Artist recieved ${originalArtist}`);
+    getSimilarArtists(originalArtist);
+  })
+
+  socket.on('simToBackend', (simArtists)  => {
+    console.log(simArtists);
+    getSimilarArtistsImages(simArtists);
+  })
+
+  socket.on('sendKeyword', (keyword) => {
+    console.log(keyword);
+    spotifyApi.searchPlaylists(keyword)
+    .then(function(data) {
+      var playListName = data.body.playlists.items[0].name;
+      var playListURL = data.body.playlists.items[0].external_urls.spotify;
+      
+      console.log(playListName)
+      socket.emit('playlist', {name : playListName, url : playListURL});
+    });
+  })
+
 })
+
+
+// var similarBands; //variable to get similar artist
+// var similarArtistList = [];
+// const getSimilarArtists = (originalArtist) => {
+
+//     console.log(`OG Artist is: ${originalArtist}`)
+
+    
+
+
+// }
+
+
+
+
+// var result0;
+// var result1;
+// var result2;
+// var result3;
+// var result4;
+
+// var test = []
+// //Create socket connection
+// io.on('connection', socket => {
+//     console.log('connected')
+
+
+//     //recieve original artist from the client
+
+
+//   socket.on('originalArtist', (artist) => {
+//     console.log(`Original Artist Socket IO is ${artist}`)
+//     // getSimilarArtists(arg);
+    
+
+
+//     console.log(`inside socket ${similarBands}}`)
+//   });
+
+//   socket.emit('sendSimilar', similarBands);
+
+
+// });
+
+server.listen(4000, () =>
+  console.log(
+    'HTTP Server up. Now go to http://localhost:4000/login in your browser.'
+  )
+);

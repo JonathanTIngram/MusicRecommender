@@ -107,10 +107,10 @@ var SearchArtist = (props) => {
     var [artistImages, setArtistImages] = useState([]);
 
 
-    const socketRef = useRef()
+    var socketRef = useRef()
 
     //send to backend
-    const postOriginalArtist = (originalA) =>{
+    var postOriginalArtist = (originalA) =>{
 
         setoriginalArtist([])
         console.log(`This is from props ${props}`)
@@ -136,14 +136,35 @@ var SearchArtist = (props) => {
         socketRef.current = io.connect("http://localhost:4000")
         socketRef.current.emit("originalArtist", originalArtist);
 
-        socketRef.current.on("sendSimilar", (similar) => {
-            setSimilarList(similar);
+        socketRef.current.on("similarArtists", (similar) => {
+            
+            var simArtists = []
 
-        })
-        socketRef.current.on("artistImages", (images) => {
-            setArtistImages(images)
-            console.log(images)
-        })
+            var similar0 = similar.artists[0].name;
+            var similar1 = similar.artists[1].name;
+            var similar2 = similar.artists[2].name;
+            var similar3 = similar.artists[3].name;
+            var similar4 = similar.artists[4].name;
+
+
+            simArtists.push(similar0);
+            simArtists.push(similar1);
+            simArtists.push(similar2);
+            simArtists.push(similar3);
+            simArtists.push(similar4);
+
+
+            setSimilarList(simArtists);  
+            socketRef.current.emit('simToBackend', simArtists);
+
+            socketRef.current.on('similarImages', (images) => {
+                console.log(images);
+                setArtistImages(images);
+            })
+    })
+
+
+    
 
 
         return () => socketRef.current.disconnect()
@@ -197,14 +218,12 @@ var SearchArtist = (props) => {
                         
                         <NavLink
                             onClick={() => {
-                                 return (
-                                     <SearchArtist artist={similarList[0]}></SearchArtist>
-                                 );
+                                showSimilarList(0);
                             }}
                             style={{textDecoration : 'none'}}>
 
                                 <h2>{similarList[0]}</h2>
-                                <img style={{opacity : '45%', borderRadius : '5%', width : '80%', height : '80%'}} src={artistImages[0]}></img>
+                                <img style={{opacity : '45%', borderRadius : '5%', width : '80%', height : '80%'}} src={artistImages[4]}></img>
                                 <div style={{paddingBottom : '5%'}}></div>
                         
                         </NavLink>
@@ -227,7 +246,7 @@ var SearchArtist = (props) => {
                             style={{textDecoration : 'none'}}>
 
                                 <h2>{similarList[2]}</h2>
-                                <img style={{opacity : '45%', borderRadius : '5%', width : '80%', height : '80%'}} src={artistImages[2]}></img>
+                                <img style={{opacity : '45%', borderRadius : '5%', width : '80%', height : '80%'}} src={artistImages[3]}></img>
                                 <div style={{paddingBottom : '5%'}}></div>
                         </NavLink>
 
@@ -238,7 +257,7 @@ var SearchArtist = (props) => {
                             style={{textDecoration : 'none'}}>
 
                                 <h2>{similarList[3]}</h2>
-                                <img style={{opacity : '45%', borderRadius : '5%', width : '80%', height : '80%'}} src={artistImages[3]}></img>
+                                <img style={{opacity : '45%', borderRadius : '5%', width : '80%', height : '80%'}} src={artistImages[0]}></img>
                                 <div style={{paddingBottom : '5%'}}></div>
                         </NavLink>
 
@@ -249,7 +268,7 @@ var SearchArtist = (props) => {
                             style={{textDecoration : 'none'}}>
 
                                 <h2>{similarList[4]}</h2>
-                                <img style={{opacity : '45%', borderRadius : '5%', width : '80%', height : '80%'}} src={artistImages[4]}></img>
+                                <img style={{opacity : '45%', borderRadius : '5%', width : '80%', height : '80%'}} src={artistImages[2]}></img>
                                 <div style={{paddingBottom : '5%'}}></div>
                         </NavLink>
 

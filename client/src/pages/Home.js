@@ -6,6 +6,7 @@ import { BrowserRouter as Router, Route, Link } from "react-router-dom";
 import io from "socket.io-client"
 import SearchArtist from './SearchArtist';
 import About from './about';
+import SearchVibes from './SearchVibes';
 
 export const BottomText = styled.p`
 
@@ -100,7 +101,7 @@ var Home = () => {
             <br></br>
             <br></br>
 
-            <NavLink to="/">
+            <NavLink to="/SearchVibes">
               <button style={{marginRight : '5%'}} class="btn btn-primary">
                 Find <br></br> Random Artist
               </button>
@@ -113,6 +114,7 @@ var Home = () => {
               </button>
             </NavLink>
 
+            <Route path="/SearchVibes"  component={SearchVibes} />
             <Route path="/SearchArtist"  component={SearchArtist} />
             <Route path="/about"  component={About} />
         </Router>

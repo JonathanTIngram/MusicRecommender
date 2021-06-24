@@ -43,7 +43,7 @@ function App() {
           </div>
 
           <BottomText>by Jonathan Ingram</BottomText>
-          <BottomText>Data Accessed via the Last FM API</BottomText> 
+          <BottomText>Data Accessed via the Spotify Web API</BottomText> 
     </div>
     
     </>
