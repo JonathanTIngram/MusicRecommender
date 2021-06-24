@@ -1,11 +1,16 @@
 var LastFmNode = require('lastfm').LastFmNode;
 const fs = require('fs');
 var Scraper = require('images-scraper');
+var cors = require('cors')
 
 //express stuff
 const express = require('express')
-const app = express()
-const port = 3000
+const app = express();
+const port = 3001
+
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded());
 
 var lastfm = new LastFmNode({
   api_key: '991ce3b092f1580bbf0a14b1ad78cf9a',
@@ -19,51 +24,62 @@ const google = new Scraper({
   },
 });
 
+var similarBands; //variable to get similar artist
 
 
-var request = lastfm.request("artist.getInfo", {
-  artist: "Knocked Loose",
-  handlers: {
-      success: function(data) {
-
-          var similarArtists = data.artist.similar.artist;
-
-          for (bands in similarArtists){
-            console.log(similarArtists[bands].name)
-          }
+const getSimilarArtists = (originalArtist) => {
 
 
-          fs.writeFileSync('music.json', JSON.stringify(similarArtists))
+  var similarArtistList = [];
+  var request = lastfm.request("artist.getInfo", {
+    artist: originalArtist,
+    handlers: {
+        success: function(data) {
 
-      },
-      error: function(error) {
-          console.log("Error: " + error.message);
-      }
-  }
-});
+            console.log(originalArtist)
+  
+            var similarArtists = data.artist.similar.artist;
+  
+            for (bands in similarArtists){
+              // console.log(similarArtists[bands].name);
+              similarArtistList.push(`${similarArtists[bands].name}`);
+              
+            }
+
+            similarBands = similarArtistList;
+  
+  
+            fs.writeFileSync('music.json', JSON.stringify(similarArtists))
+  
+        },
+        error: function(error) {
+            console.log("Error: " + error.message);
+        }
+    }
+  });
 
 
-var getSimilarArtists = (artists) => {
-
-  for (let bands in artists){
-
-    otherArtist = artists[bands];
-
-    console.log(artists[bands]);
-    var img = google.scrape(otherArtist, 1);
-
-    console.log(img)
-
-    // console.log(`The image url is: ${img[0].url}`);
-
-  }
 }
 
 
-// app.get('/', (req, res) => {
-//   getSimilarArtists(request);
-// })
+// getSimilarArtists('Retirement Party');
 
-// app.listen(port, () => {
-//   console.log(`Example app listening at http://localhost:${port}`)
-// })
+
+app.post('/postOriginal', (req, res) => {
+
+  console.log(req.body);
+})
+
+app.get('/getArtist', (req, res) => {
+  res.send(similarBands);
+})
+
+
+app.get('/', (req, res) => {
+  console.log('pog')
+
+})
+
+app.listen(port, () => {
+  console.log(`Example app listening at http://localhost:${port}`)
+})
